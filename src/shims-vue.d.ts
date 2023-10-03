@@ -12,5 +12,4 @@ interface User {
 
 interface AuthenticatedUser extends User {
   email: string
-  password: string
 }

@@ -1,24 +1,42 @@
 import router from '@/router'
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut as fbSignOut
+} from 'firebase/auth'
+import { doc, getDoc, setDoc } from 'firebase/firestore'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { useFirebaseAuth, useFirestore } from 'vuefire'
 
 export const useAuthStore = defineStore(
   'auth',
   () => {
     const authenticatedUser = ref<AuthenticatedUser | undefined>(undefined)
-    const users = ref<Array<AuthenticatedUser>>([
-      {
-        uid: '1',
-        name: 'John Doe',
-        username: 'johndoe',
-        email: 'johndoe@email.com',
-        password: '123',
-        imageUrl: 'https://logodownload.org/wp-content/uploads/2017/09/mackenzie-logo-3.png',
-        followingCount: 0,
+    const users = ref<AuthenticatedUser[]>([])
+
+    const auth = useFirebaseAuth()
+    const db = useFirestore()
+
+    async function storeUserFromCredential(
+      id: string,
+      email: string,
+      name: string | null,
+      imageUrl: string | null = null
+    ) {
+      const user = {
+        uid: id,
+        name: name,
+        email: email,
+        username: name,
+        imageUrl: imageUrl,
         followersCount: 0,
-        createdAt: new Date()
+        followingCount: 0,
+        createAt: new Date()
       }
-    ])
+      await setDoc(doc(db, 'users', id), user)
+      return user
+    }
 
     async function signUp({
       name,
@@ -29,34 +47,28 @@ export const useAuthStore = defineStore(
       email: string
       password: string
     }) {
-      if (users.value.find((user) => user.email === email)) {
-        throw new Error('User already exists')
-      }
-
-      const user = {
-        name,
-        email,
-        password,
-        uid: (users.value.length + 1).toString(),
-        username: name.replace(' ', '').toLowerCase(),
-        imageUrl: undefined,
-        followingCount: 0,
-        followersCount: 0,
-        createdAt: new Date()
-      }
-
-      users.value.push(user)
-      authenticatedUser.value = user
+      const userCredentials = await createUserWithEmailAndPassword(auth!, email, password)
+      authenticatedUser.value = await storeUserFromCredential(
+        userCredentials.user.uid,
+        userCredentials.user.email!,
+        name
+      )
     }
 
     async function authenticate({ email, password }: { email: string; password: string }) {
-      authenticatedUser.value = users.value.find(
-        (user) => user.email === email && user.password === password
-      )
+      const userCredentials = await signInWithEmailAndPassword(auth!, email, password)
+      const docSnap = await getDoc(doc(db, 'users', userCredentials.user.uid))
+
+      if (!docSnap.exists()) {
+        throw new Error('Authentication Failed')
+      }
+
+      authenticatedUser.value = docSnap.data()
     }
 
     async function signOut() {
       authenticatedUser.value = undefined
+      await fbSignOut(auth!)
       await router.replace('/login')
     }
 

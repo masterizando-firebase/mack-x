@@ -1,4 +1,5 @@
 /* eslint-disable vue/multi-word-component-names,vue/no-reserved-component-names */
+import { initializeApp } from 'firebase/app'
 import { createPinia } from 'pinia'
 
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
@@ -20,6 +21,7 @@ import Toast from 'primevue/toast'
 import ToastService from 'primevue/toastservice'
 
 import { createApp } from 'vue'
+import { VueFire, VueFireAuth } from 'vuefire'
 
 import App from './App.vue'
 import router from './router'
@@ -27,6 +29,17 @@ import router from './router'
 const app = createApp(App)
 
 // Firebase
+const firebaseApp = initializeApp({
+  apiKey: 'AIzaSyBHFn9HO6R3xyKTz9A_3F2YKjpqlvxxrF0',
+  authDomain: 'mack-x-internal.firebaseapp.com',
+  databaseURL: 'https://mack-x-internal-default-rtdb.firebaseio.com',
+  projectId: 'mack-x-internal',
+  storageBucket: 'mack-x-internal.appspot.com',
+  messagingSenderId: '123354591885',
+  appId: '1:123354591885:web:b1a1250701253059f728c4',
+  measurementId: 'G-9TJHNNJXP9'
+})
+app.use(VueFire, { firebaseApp, modules: [VueFireAuth()] })
 
 // Pinia
 const pinia = createPinia()
