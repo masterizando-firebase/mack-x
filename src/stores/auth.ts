@@ -20,6 +20,7 @@ import {
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { getCurrentUser, useFirebaseAuth, useFirestore } from 'vuefire'
+import { getDownloadURL, getStorage, ref as stRef, uploadBytes } from 'firebase/storage'
 
 export const useAuthStore = defineStore(
   'auth',
@@ -58,10 +59,10 @@ export const useAuthStore = defineStore(
     }
 
     async function signUp({
-      name,
-      email,
-      password
-    }: {
+                            name,
+                            email,
+                            password
+                          }: {
       name: string
       email: string
       password: string
@@ -119,7 +120,7 @@ export const useAuthStore = defineStore(
       return !docSnap.empty && docSnap.docs[0].exists()
     }
 
-    async function update(user: AuthenticatedUser) {
+    async function update(user: AuthenticatedUser, image: File | null) {
       const currentUser = await getCurrentUser()
 
       if (!currentUser) {
@@ -128,6 +129,10 @@ export const useAuthStore = defineStore(
 
       if (await userWithUsernameExists(user.username)) {
         throw new Error('Username already exists')
+      }
+
+      if (image) {
+        // Upload image
       }
 
       await updateDoc(doc(db, 'users', user.uid), { ...user })

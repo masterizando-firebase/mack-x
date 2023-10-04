@@ -21,6 +21,11 @@ const router = createRouter({
       component: () => import('../views/RegisterView.vue')
     },
     {
+      path: '/bookmarks',
+      name: 'bookmarks',
+      component: () => import('../views/BookmarksView.vue')
+    },
+    {
       path: '/profile/:username',
       name: 'profile',
       component: () => import('../views/ProfileView.vue'),

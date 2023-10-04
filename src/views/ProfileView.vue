@@ -33,14 +33,16 @@ onBeforeMount(async () => {
   try {
     const foundUser = await authStore.getByUsername(username)
 
-    user.value = {
-      uid: foundUser.uid,
-      name: foundUser.name,
-      username: foundUser.username,
-      imageUrl: foundUser.imageUrl ?? '',
-      followingCount: foundUser.followingCount,
-      followersCount: foundUser.followersCount,
-      createdAt: foundUser.createdAt
+    if (foundUser) {
+      user.value = {
+        uid: foundUser.uid,
+        name: foundUser.name,
+        username: foundUser.username,
+        imageUrl: foundUser.imageUrl ?? '',
+        followingCount: foundUser.followingCount,
+        followersCount: foundUser.followersCount,
+        createdAt: foundUser.createdAt
+      }
     }
   } catch (e) {
     await router.push('/404')

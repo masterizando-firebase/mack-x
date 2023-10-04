@@ -7,6 +7,7 @@ import { useToast } from 'primevue/usetoast'
 import { useForm } from 'vee-validate'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import AuthFileField from "@/components/auth/AuthFileField.vue";
 
 const emits = defineEmits(['change'])
 
@@ -17,6 +18,7 @@ const authStore = useAuthStore()
 const { handleSubmit, resetForm } = useForm()
 
 const user = ref<AuthenticatedUser>(authStore.authenticatedUser!)
+const profileImage = ref<File | null>(null)
 
 const onSubmit = handleSubmit(async (values) => {
   user.value = authStore.authenticatedUser!
@@ -30,7 +32,7 @@ const onSubmit = handleSubmit(async (values) => {
   }
 
   try {
-    await authStore.update(user.value)
+    await authStore.update(user.value, profileImage.value)
   } catch (e: any) {
     toast.add({
       severity: 'error',
@@ -52,10 +54,6 @@ const onSubmit = handleSubmit(async (values) => {
   emits('change')
   router.back()
 })
-
-const onAdvancedUpload = () => {
-  toast.add({ severity: 'info', summary: 'Success', detail: 'File Uploaded', life: 3000 })
-}
 </script>
 
 <template>
@@ -80,16 +78,7 @@ const onAdvancedUpload = () => {
             <ProfileUsernameField :initial-username="user.username" class="mt-2 mb-2" />
 
             <!--     File     -->
-            <FileUpload
-              id="file-upload"
-              :fileLimit="1"
-              :maxFileSize="100000"
-              accept="image/*"
-              chooseLabel="Upload Image"
-              class="align-self-start min-w-full"
-              mode="basic"
-              @upload="onAdvancedUpload"
-            />
+            <AuthFileField v-model="profileImage" />
 
             <!--      Submit        -->
             <div class="flex gap-8 mt-5">

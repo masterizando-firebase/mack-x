@@ -4,13 +4,16 @@ import { useAuthStore } from '@/stores/auth'
 import type { Tweet } from '@/stores/timeline'
 import { useTimelineStore } from '@/stores/timeline'
 import { onBeforeMount, ref } from 'vue'
+import { useBookmarksStore } from '@/stores/bookmarks'
 
 const { likeTweet, unlikeTweet } = useTimelineStore()
+const { addBookmark, removeBookmark } = useBookmarksStore()
 
 const props = defineProps<{ tweet: Tweet }>()
 
 const likes = ref<number>(props.tweet.likes)
 const isLiked = ref<boolean>(false)
+const isBookmarked = ref<boolean>(false)
 const user = ref<User | undefined>(undefined)
 
 async function onLike(): Promise<void> {
@@ -22,6 +25,16 @@ async function onLike(): Promise<void> {
 
   isLiked.value = !isLiked.value
   likes.value += isLiked.value ? 1 : -1
+}
+
+async function onBookmark(): Promise<void> {
+  if (isBookmarked.value) {
+    await removeBookmark(props.tweet)
+  } else {
+    await addBookmark(props.tweet)
+  }
+
+  isBookmarked.value = !isBookmarked.value
 }
 
 onBeforeMount(async () => {
@@ -53,7 +66,7 @@ onBeforeMount(async () => {
         <img :src="tweet.imageUrl" alt="Tweet image" class="tweet-image" />
       </div>
 
-      <div class="reactions">
+      <div class="flex reactions">
         <Button
           :icon="`pi pi-heart${isLiked ? '-fill' : ''}`"
           :label="`${likes}`"
@@ -63,6 +76,15 @@ onBeforeMount(async () => {
           size="small"
           text
           @click="onLike()"
+        />
+
+        <Button
+          :icon="`pi pi-bookmark${isBookmarked ? '-fill' : ''}`"
+          rounded
+          severity="primary"
+          size="small"
+          text
+          @click="onBookmark()"
         />
       </div>
     </div>

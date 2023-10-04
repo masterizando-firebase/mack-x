@@ -29,6 +29,16 @@ const { authenticatedUser } = useAuthStore()
 
         <Button
           class="action"
+          icon="pi pi-bookmark"
+          label="Bookmarks"
+          rounded
+          size="large"
+          text
+          @click="router.push('/bookmarks')"
+        />
+
+        <Button
+          class="action"
           icon="pi pi-user"
           label="Profile"
           rounded
