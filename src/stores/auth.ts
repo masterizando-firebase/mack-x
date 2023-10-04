@@ -50,7 +50,7 @@ export const useAuthStore = defineStore(
         imageUrl: imageUrl,
         followersCount: 0,
         followingCount: 0,
-        createAt: new Date()
+        createdAt: new Date()
       }
 
       await setDoc(getByIdQuery(user.uid), user)
