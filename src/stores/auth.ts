@@ -1,22 +1,38 @@
 import router from '@/router'
 import {
   createUserWithEmailAndPassword,
+  GoogleAuthProvider,
   signInWithEmailAndPassword,
+  signInWithPopup,
   signOut as fbSignOut
 } from 'firebase/auth'
-import { doc, getDoc, setDoc } from 'firebase/firestore'
+
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  setDoc,
+  updateDoc,
+  where
+} from 'firebase/firestore'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { useFirebaseAuth, useFirestore } from 'vuefire'
+import { getCurrentUser, useFirebaseAuth, useFirestore } from 'vuefire'
 
 export const useAuthStore = defineStore(
   'auth',
   () => {
     const authenticatedUser = ref<AuthenticatedUser | undefined>(undefined)
-    const users = ref<AuthenticatedUser[]>([])
+    const users = ref<Array<User>>([])
 
     const auth = useFirebaseAuth()
     const db = useFirestore()
+
+    function generateUsername(name: string) {
+      return `${name.replace(/ /g, '').toLowerCase()}`
+    }
 
     async function storeUserFromCredential(
       id: string,
@@ -24,11 +40,13 @@ export const useAuthStore = defineStore(
       name: string | null,
       imageUrl: string | null = null
     ) {
+      const storeName = name || 'user'
+
       const user = {
         uid: id,
         name: name,
         email: email,
-        username: name,
+        username: generateUsername(storeName),
         imageUrl: imageUrl,
         followersCount: 0,
         followingCount: 0,
@@ -63,7 +81,26 @@ export const useAuthStore = defineStore(
         throw new Error('Authentication Failed')
       }
 
-      authenticatedUser.value = docSnap.data()
+      authenticatedUser.value = docSnap.data() as AuthenticatedUser
+    }
+
+    async function signInWithGoogle() {
+      const provider = new GoogleAuthProvider()
+      const userCredentials = await signInWithPopup(auth!, provider)
+      const docSnap = await getDoc(doc(db, 'users', userCredentials.user.uid))
+
+      let user: AuthenticatedUser | null = null
+
+      if (!docSnap.exists()) {
+        user = await storeUserFromCredential(
+          userCredentials.user.uid,
+          userCredentials.user.email!,
+          userCredentials.user.displayName,
+          userCredentials.user.photoURL
+        )
+      }
+
+      authenticatedUser.value = user || (docSnap.data() as AuthenticatedUser)
     }
 
     async function signOut() {
@@ -72,19 +109,27 @@ export const useAuthStore = defineStore(
       await router.replace('/login')
     }
 
-    async function update(user: AuthenticatedUser) {
-      const index = users.value.findIndex((u) => u.email === user.email)
+    async function userWithUsernameExists(username: string) {
+      const userCollection = collection(db, 'users')
+      const whereCond = where('username', '==', username)
 
-      if (index === -1) {
+      const docSnap = await getDocs(query(userCollection, whereCond))
+
+      return !docSnap.empty && docSnap.docs[0].exists()
+    }
+
+    async function update(user: AuthenticatedUser) {
+      const currentUser = await getCurrentUser()
+
+      if (!currentUser) {
         throw new Error('User not found')
       }
 
-      if (user.username in users.value && users.value[index].username !== user.username) {
+      if (await userWithUsernameExists(user.username)) {
         throw new Error('Username already exists')
       }
 
-      users.value[index] = user
-      authenticatedUser.value = user
+      await updateDoc(doc(db, 'users', user.uid), { ...user })
     }
 
     function getByUsername(username: string | string[]) {
@@ -100,6 +145,7 @@ export const useAuthStore = defineStore(
       users,
       signUp,
       authenticate,
+      signInWithGoogle,
       signOut,
       update,
       getById,

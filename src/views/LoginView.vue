@@ -42,20 +42,20 @@ const onSubmit = handleSubmit(async (values) => {
   handleSignInSuccess()
 })
 
-// async function handleSignInWithGoogle() {
-//   try {
-//     await authStore.signInWithGoogle()
-//   } catch (e) {
-//     toast.add({
-//       severity: 'error',
-//       summary: 'Login Error',
-//       detail: 'Please check your credentials and try again.',
-//       life: 3000
-//     })
-//     return
-//   }
-//   handleSignInSuccess()
-// }
+async function handleSignInWithGoogle() {
+  try {
+    await authStore.signInWithGoogle()
+  } catch (e) {
+    toast.add({
+      severity: 'error',
+      summary: 'Login Error',
+      detail: 'Please check your credentials and try again.',
+      life: 3000
+    })
+    return
+  }
+  handleSignInSuccess()
+}
 
 function navigateCreateAccount() {
   router.push('/register')
@@ -79,14 +79,14 @@ function navigateCreateAccount() {
           <Button class="mt-1 mb-3" label="Submit" type="submit" />
         </form>
 
-        <!--        <div class="flex flex-column">-->
-        <!--          <Button-->
-        <!--            aria-label="signInWithGoogle"-->
-        <!--            class="align-self-center w-full bg-white"-->
-        <!--            icon="pi pi-google"-->
-        <!--            @click="handleSignInWithGoogle"-->
-        <!--          />-->
-        <!--        </div>-->
+        <div class="flex flex-column">
+          <Button
+            aria-label="signInWithGoogle"
+            class="align-self-center w-full bg-white"
+            icon="pi pi-google"
+            @click="handleSignInWithGoogle"
+          />
+        </div>
         <divider />
 
         <Button
