@@ -30,14 +30,14 @@ const app = createApp(App)
 
 // Firebase
 const firebaseApp = initializeApp({
-  apiKey: 'AIzaSyBHFn9HO6R3xyKTz9A_3F2YKjpqlvxxrF0',
-  authDomain: 'mack-x-internal.firebaseapp.com',
-  databaseURL: 'https://mack-x-internal-default-rtdb.firebaseio.com',
-  projectId: 'mack-x-internal',
-  storageBucket: 'mack-x-internal.appspot.com',
-  messagingSenderId: '123354591885',
-  appId: '1:123354591885:web:b1a1250701253059f728c4',
-  measurementId: 'G-9TJHNNJXP9'
+  apiKey: 'AIzaSyB_d8vI060tCT_ESKuTCktu01HJRND5rLM',
+  authDomain: 'mack-x-01.firebaseapp.com',
+  databaseURL: 'https://mack-x-01-default-rtdb.firebaseio.com',
+  projectId: 'mack-x-01',
+  storageBucket: 'mack-x-01.appspot.com',
+  messagingSenderId: '14663099644',
+  appId: '1:14663099644:web:d5f95653da6e1bf386a379',
+  measurementId: 'G-BN45GH76KC'
 })
 app.use(VueFire, { firebaseApp, modules: [VueFireAuth()] })
 
