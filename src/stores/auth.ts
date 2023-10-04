@@ -44,7 +44,7 @@ export const useAuthStore = defineStore(
 
       const user = {
         uid: id,
-        name: name,
+        name: storeName,
         email: email,
         username: generateUsername(storeName),
         imageUrl: imageUrl,
@@ -52,7 +52,8 @@ export const useAuthStore = defineStore(
         followingCount: 0,
         createAt: new Date()
       }
-      await setDoc(doc(db, 'users', id), user)
+
+      await setDoc(getByIdQuery(user.uid), user)
       return user
     }
 
@@ -75,7 +76,7 @@ export const useAuthStore = defineStore(
 
     async function authenticate({ email, password }: { email: string; password: string }) {
       const userCredentials = await signInWithEmailAndPassword(auth!, email, password)
-      const docSnap = await getDoc(doc(db, 'users', userCredentials.user.uid))
+      const docSnap = await getDoc(getByIdQuery(userCredentials.user.uid))
 
       if (!docSnap.exists()) {
         throw new Error('Authentication Failed')
@@ -87,7 +88,7 @@ export const useAuthStore = defineStore(
     async function signInWithGoogle() {
       const provider = new GoogleAuthProvider()
       const userCredentials = await signInWithPopup(auth!, provider)
-      const docSnap = await getDoc(doc(db, 'users', userCredentials.user.uid))
+      const docSnap = await getDoc(getByIdQuery(userCredentials.user.uid))
 
       let user: AuthenticatedUser | null = null
 
@@ -136,8 +137,17 @@ export const useAuthStore = defineStore(
       return users.value.find((user) => user.username === username)
     }
 
+    function getByIdQuery(id: string) {
+      return doc(db, 'users', id)
+    }
+
     async function getById(id: string) {
-      return users.value.find((user) => user.uid === id)
+      const docSnap = await getDoc(getByIdQuery(id))
+      if (!docSnap.exists()) {
+        throw new Error('Not found')
+      }
+
+      return docSnap.data() as User
     }
 
     return {

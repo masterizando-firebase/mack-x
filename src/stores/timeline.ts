@@ -1,5 +1,7 @@
+import { getDatabase, push, ref as dbRef, update } from 'firebase/database'
 import { defineStore } from 'pinia'
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
+import { getCurrentUser, useDatabaseList } from 'vuefire'
 
 export interface Tweet {
   id: string
@@ -13,17 +15,9 @@ export interface Tweet {
 export const useTimelineStore = defineStore(
   'timeline',
   () => {
-    const timeline = ref<Array<Tweet>>([
-      {
-        id: '1',
-        userId: '1',
-        imageUrl: 'https://pbs.twimg.com/media/F7I-XF2W0AAeiMc?format=jpg&name=medium',
-        likes: 0,
-        createdAt: new Date().getTime(),
-        content:
-          'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec auctor, nisl euismod'
-      }
-    ])
+    const db = getDatabase()
+    const timelineRef = dbRef(db, 'timeline')
+    const timeline = useDatabaseList<Tweet>(timelineRef)
 
     const tweets = computed(() =>
       [...timeline.value].sort(
@@ -33,11 +27,11 @@ export const useTimelineStore = defineStore(
     )
 
     async function createTweet({ content, image }: { content: string; image?: File | null }) {
-      const userId = '1'
+      const user = await getCurrentUser()
 
-      timeline.value.push({
+      await push(timelineRef, {
         id: Math.floor(Math.random() * 10000).toString(),
-        userId: userId,
+        userId: user!.uid,
         imageUrl: image
           ? 'https://pbs.twimg.com/media/F7I-XF2W0AAeiMc?format=jpg&name=medium'
           : null,
@@ -48,17 +42,21 @@ export const useTimelineStore = defineStore(
     }
 
     async function likeTweet(tweet: Tweet): Promise<void> {
-      const storedTweetIndex = timeline.value.findIndex((t) => t.id === tweet.id)
-      const storedTweet = timeline.value[storedTweetIndex]
-      storedTweet.likes = storedTweet.likes + 1
-      timeline.value.splice(storedTweetIndex, 1, storedTweet)
+      await update(timelineRef, {
+        [tweet.id]: {
+          ...tweet,
+          likes: tweet.likes + 1
+        }
+      })
     }
 
     async function unlikeTweet(tweet: Tweet): Promise<void> {
-      const storedTweetIndex = timeline.value.findIndex((t) => t.id === tweet.id)
-      const storedTweet = timeline.value[storedTweetIndex]
-      storedTweet.likes = storedTweet.likes - 1
-      timeline.value.splice(storedTweetIndex, 1, storedTweet)
+      await update(timelineRef, {
+        [tweet.id]: {
+          ...tweet,
+          likes: tweet.likes - 1
+        }
+      })
     }
 
     return { createTweet, likeTweet, unlikeTweet, tweets }
