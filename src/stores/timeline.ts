@@ -33,14 +33,14 @@ export const useTimelineStore = defineStore(
     async function createTweet({ content, image }: { content: string; image?: File | null }) {
       const user = await getCurrentUser()
 
-      const tweet = {
+      const tweet: Tweet = {
         id: Math.floor(Math.random() * 10000).toString(),
         userId: user!.uid,
         imageUrl: null,
         likes: 0,
         createdAt: new Date().getTime(),
         content
-      }
+      } satisfies Tweet
 
       if (image) {
         const fileName = Math.floor(Math.random() * 10000).toString()
