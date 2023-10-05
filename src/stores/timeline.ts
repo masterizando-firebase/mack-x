@@ -1,5 +1,6 @@
 import { getAnalytics, logEvent } from 'firebase/analytics'
 import { getDatabase, push, ref as dbRef, update } from 'firebase/database'
+import { getDownloadURL, getStorage, ref as stRef, uploadBytes } from 'firebase/storage'
 import { defineStore } from 'pinia'
 import { computed } from 'vue'
 import { getCurrentUser, useDatabaseList } from 'vuefire'
@@ -20,6 +21,7 @@ export const useTimelineStore = defineStore(
     const timelineRef = dbRef(db, 'timeline')
     const timeline = useDatabaseList<Tweet>(timelineRef)
     const analytics = getAnalytics()
+    const storage = getStorage()
 
     const tweets = computed(() =>
       [...timeline.value].sort(
@@ -30,15 +32,21 @@ export const useTimelineStore = defineStore(
 
     async function createTweet({ content, image }: { content: string; image?: File | null }) {
       const user = await getCurrentUser()
+
       const tweet = {
         id: Math.floor(Math.random() * 10000).toString(),
         userId: user!.uid,
-        imageUrl: image
-          ? 'https://pbs.twimg.com/media/F7I-XF2W0AAeiMc?format=jpg&name=medium'
-          : null,
+        imageUrl: null,
         likes: 0,
         createdAt: new Date().getTime(),
         content
+      }
+
+      if (image) {
+        const fileName = Math.floor(Math.random() * 10000).toString()
+        const imageRef = stRef(storage, fileName)
+        await uploadBytes(imageRef, image)
+        tweet.imageUrl = await getDownloadURL(imageRef)
       }
 
       await push(timelineRef, tweet)

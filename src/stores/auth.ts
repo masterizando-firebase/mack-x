@@ -18,6 +18,7 @@ import {
   updateDoc,
   where
 } from 'firebase/firestore'
+import { getDownloadURL, getStorage, ref as stRef, uploadBytes } from 'firebase/storage'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { getCurrentUser, useFirebaseAuth, useFirestore } from 'vuefire'
@@ -31,6 +32,7 @@ export const useAuthStore = defineStore(
     const auth = useFirebaseAuth()
     const db = useFirestore()
     const analytics = getAnalytics()
+    const storage = getStorage()
 
     function generateUsername(name: string) {
       return `${name.replace(/ /g, '').toLowerCase()}`
@@ -137,7 +139,10 @@ export const useAuthStore = defineStore(
       }
 
       if (image) {
-        // Upload image
+        const fileName = Math.floor(Math.random() * 10000).toString()
+        const imageRef = stRef(storage, fileName)
+        await uploadBytes(imageRef, image)
+        user.imageUrl = await getDownloadURL(imageRef)
       }
 
       logEvent(analytics, 'updated_user', { user: authenticatedUser.value })
