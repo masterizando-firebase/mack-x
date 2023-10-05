@@ -1,3 +1,4 @@
+import { getAnalytics, logEvent } from 'firebase/analytics'
 import { getDatabase, push, ref as dbRef, update } from 'firebase/database'
 import { defineStore } from 'pinia'
 import { computed } from 'vue'
@@ -18,6 +19,7 @@ export const useTimelineStore = defineStore(
     const db = getDatabase()
     const timelineRef = dbRef(db, 'timeline')
     const timeline = useDatabaseList<Tweet>(timelineRef)
+    const analytics = getAnalytics()
 
     const tweets = computed(() =>
       [...timeline.value].sort(
@@ -28,8 +30,7 @@ export const useTimelineStore = defineStore(
 
     async function createTweet({ content, image }: { content: string; image?: File | null }) {
       const user = await getCurrentUser()
-
-      await push(timelineRef, {
+      const tweet = {
         id: Math.floor(Math.random() * 10000).toString(),
         userId: user!.uid,
         imageUrl: image
@@ -38,7 +39,11 @@ export const useTimelineStore = defineStore(
         likes: 0,
         createdAt: new Date().getTime(),
         content
-      })
+      }
+
+      await push(timelineRef, tweet)
+
+      logEvent(analytics, 'tweet_create', { tweet: tweet, user: user })
     }
 
     async function likeTweet(tweet: Tweet): Promise<void> {
@@ -48,6 +53,7 @@ export const useTimelineStore = defineStore(
           likes: tweet.likes + 1
         }
       })
+      logEvent(analytics, 'tweet_like', { tweet })
     }
 
     async function unlikeTweet(tweet: Tweet): Promise<void> {
@@ -57,6 +63,7 @@ export const useTimelineStore = defineStore(
           likes: tweet.likes - 1
         }
       })
+      logEvent(analytics, 'tweet_unlike', { tweet })
     }
 
     return { createTweet, likeTweet, unlikeTweet, tweets }

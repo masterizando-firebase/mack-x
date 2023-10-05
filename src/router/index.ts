@@ -1,4 +1,5 @@
 import { useAuthStore } from '@/stores/auth'
+import { getAnalytics, logEvent } from 'firebase/analytics'
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 
@@ -44,6 +45,7 @@ const router = createRouter({
 const nonAuthenticatedRoutes = ['login', 'register']
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore()
+  logEvent(getAnalytics(), 'screen_view')
 
   if (authStore.authenticatedUser && nonAuthenticatedRoutes.includes(to.name as string)) {
     next({ name: 'home' })

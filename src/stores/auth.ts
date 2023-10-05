@@ -1,4 +1,5 @@
 import router from '@/router'
+import { getAnalytics, logEvent } from 'firebase/analytics'
 import {
   createUserWithEmailAndPassword,
   GoogleAuthProvider,
@@ -20,7 +21,6 @@ import {
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { getCurrentUser, useFirebaseAuth, useFirestore } from 'vuefire'
-import { getDownloadURL, getStorage, ref as stRef, uploadBytes } from 'firebase/storage'
 
 export const useAuthStore = defineStore(
   'auth',
@@ -30,6 +30,7 @@ export const useAuthStore = defineStore(
 
     const auth = useFirebaseAuth()
     const db = useFirestore()
+    const analytics = getAnalytics()
 
     function generateUsername(name: string) {
       return `${name.replace(/ /g, '').toLowerCase()}`
@@ -59,10 +60,10 @@ export const useAuthStore = defineStore(
     }
 
     async function signUp({
-                            name,
-                            email,
-                            password
-                          }: {
+      name,
+      email,
+      password
+    }: {
       name: string
       email: string
       password: string
@@ -73,6 +74,7 @@ export const useAuthStore = defineStore(
         userCredentials.user.email!,
         name
       )
+      logEvent(analytics, 'sign_up', { user: authenticatedUser.value })
     }
 
     async function authenticate({ email, password }: { email: string; password: string }) {
@@ -84,6 +86,7 @@ export const useAuthStore = defineStore(
       }
 
       authenticatedUser.value = docSnap.data() as AuthenticatedUser
+      logEvent(analytics, 'login', { user: authenticatedUser.value })
     }
 
     async function signInWithGoogle() {
@@ -103,9 +106,11 @@ export const useAuthStore = defineStore(
       }
 
       authenticatedUser.value = user || (docSnap.data() as AuthenticatedUser)
+      logEvent(analytics, 'login', { user: authenticatedUser.value })
     }
 
     async function signOut() {
+      logEvent(analytics, 'sign_out', { user: authenticatedUser.value })
       authenticatedUser.value = undefined
       await fbSignOut(auth!)
       await router.replace('/login')
@@ -135,11 +140,18 @@ export const useAuthStore = defineStore(
         // Upload image
       }
 
+      logEvent(analytics, 'updated_user', { user: authenticatedUser.value })
+
       await updateDoc(doc(db, 'users', user.uid), { ...user })
     }
 
-    function getByUsername(username: string | string[]) {
-      return users.value.find((user) => user.username === username)
+    async function getByUsername(username: string | string[]) {
+      const userCollection = collection(db, 'users')
+      const whereCond = where('username', '==', username)
+
+      const docSnap = await getDocs(query(userCollection, whereCond))
+
+      return docSnap.docs[0].data() as User
     }
 
     function getByIdQuery(id: string) {

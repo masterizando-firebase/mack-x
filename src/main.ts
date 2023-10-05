@@ -1,4 +1,5 @@
 /* eslint-disable vue/multi-word-component-names,vue/no-reserved-component-names */
+import { initializeAnalytics } from 'firebase/analytics'
 import { initializeApp } from 'firebase/app'
 import { createPinia } from 'pinia'
 
@@ -39,6 +40,7 @@ const firebaseApp = initializeApp({
   appId: '1:14663099644:web:d5f95653da6e1bf386a379',
   measurementId: 'G-BN45GH76KC'
 })
+const analytics = initializeAnalytics(firebaseApp)
 app.use(VueFire, { firebaseApp, modules: [VueFireAuth()] })
 
 // Pinia
